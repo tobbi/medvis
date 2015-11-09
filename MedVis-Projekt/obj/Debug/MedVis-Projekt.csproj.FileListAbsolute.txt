@@ -1,0 +1,10 @@
+C:\Users\tobbi\Documents\SharpDevelop Projects\MedVis-Projekt\MedVis-Projekt\obj\Debug\MedVis-Projekt.csprojResolveAssemblyReference.cache
+C:\Users\tobbi\Documents\SharpDevelop Projects\MedVis-Projekt\MedVis-Projekt\bin\Debug\MedVis-Projekt.exe.config
+C:\Users\tobbi\Documents\SharpDevelop Projects\MedVis-Projekt\MedVis-Projekt\bin\Debug\MedVis-Projekt.exe
+C:\Users\tobbi\Documents\SharpDevelop Projects\MedVis-Projekt\MedVis-Projekt\bin\Debug\MedVis-Projekt.pdb
+C:\Users\tobbi\Documents\SharpDevelop Projects\MedVis-Projekt\MedVis-Projekt\obj\Debug\MedVis-Projekt.exe
+C:\Users\tobbi\Documents\SharpDevelop Projects\MedVis-Projekt\MedVis-Projekt\obj\Debug\MedVis-Projekt.pdb
+C:\Users\tobbi\Documents\SharpDevelop Projects\MedVis-Projekt\MedVis-Projekt\obj\Debug\MedVis_Projekt.MainForm.resources
+C:\Users\tobbi\Documents\SharpDevelop Projects\MedVis-Projekt\MedVis-Projekt\obj\Debug\MedVis-Projekt.csproj.GenerateResource.Cache
+C:\Users\tobbi\Documents\SharpDevelop Projects\MedVis-Projekt\MedVis-Projekt\bin\Debug\SDL2-CS.dll
+C:\Users\tobbi\Documents\SharpDevelop Projects\MedVis-Projekt\MedVis-Projekt\bin\Debug\SDL2-CS.pdb
