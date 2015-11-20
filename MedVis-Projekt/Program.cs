@@ -16,6 +16,7 @@ namespace MedVis_Projekt
 	/// </summary>
 	internal sealed class Program
 	{
+
 		/// <summary>
 		/// Program entry point.
 		/// </summary>

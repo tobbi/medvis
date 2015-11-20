@@ -142,7 +142,13 @@ namespace MedVis_Projekt
 					if(dataFormat.EndsWith("8"))
 					{
 						byte val = ByteStreamParser.getSubArray(stream, index, index + 1)[0];
+						try {
 						pixels[(int)_y * (int)this.voxelsY + (int)_x] = (int)SDL.SDL_MapRGBA(surface_struct.format, val, val, val, 255);
+						}
+						catch(IndexOutOfRangeException)
+						{
+							return;
+						}
 						//SDL.SDL_Point p;
 						//SDL.SDL_Rect r = new SDL.SDL_Rect();
 						//r.x = (int)_x;

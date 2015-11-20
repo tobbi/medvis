@@ -8,3 +8,14 @@ C:\Users\tobbi\Documents\SharpDevelop Projects\MedVis-Projekt\MedVis-Projekt\obj
 C:\Users\tobbi\Documents\SharpDevelop Projects\MedVis-Projekt\MedVis-Projekt\obj\Debug\MedVis-Projekt.csproj.GenerateResource.Cache
 C:\Users\tobbi\Documents\SharpDevelop Projects\MedVis-Projekt\MedVis-Projekt\bin\Debug\SDL2-CS.dll
 C:\Users\tobbi\Documents\SharpDevelop Projects\MedVis-Projekt\MedVis-Projekt\bin\Debug\SDL2-CS.pdb
+F:\MedVis-Projekt\MedVis-Projekt\bin\Debug\MedVis-Projekt.exe.config
+F:\MedVis-Projekt\MedVis-Projekt\bin\Debug\MedVis-Projekt.exe
+F:\MedVis-Projekt\MedVis-Projekt\bin\Debug\MedVis-Projekt.pdb
+F:\MedVis-Projekt\MedVis-Projekt\bin\Debug\SDL2-CS.pdb
+F:\MedVis-Projekt\MedVis-Projekt\obj\Debug\MedVis-Projekt.csprojResolveAssemblyReference.cache
+F:\MedVis-Projekt\MedVis-Projekt\obj\Debug\MedVis_Projekt.MainForm.resources
+F:\MedVis-Projekt\MedVis-Projekt\obj\Debug\MedVis-Projekt.csproj.GenerateResource.Cache
+F:\MedVis-Projekt\MedVis-Projekt\obj\Debug\MedVis-Projekt.exe
+F:\MedVis-Projekt\MedVis-Projekt\obj\Debug\MedVis-Projekt.pdb
+F:\MedVis-Projekt\MedVis-Projekt\bin\Debug\WacomMTDN.dll
+F:\MedVis-Projekt\MedVis-Projekt\bin\Debug\WacomMTDN.pdb

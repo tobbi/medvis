@@ -9,12 +9,11 @@
  
 using SDL2;
 using System;
-using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
 using System.Runtime.InteropServices;
-using System.Security.Permissions;
 using System.Windows.Forms;
+
+using WacomMTDN;
 
 namespace MedVis_Projekt
 {
@@ -35,60 +34,39 @@ namespace MedVis_Projekt
 			//
 		}
 		
-		[DllImport("user32")]
-		[return: MarshalAs(UnmanagedType.Bool)]
-		private static extern bool RegisterTouchWindow(System.IntPtr hWnd, uint ulFlags);
-		
-		private const int WM_TOUCH = 0x0240;
-		
 		private IntPtr renderer, window;
 		private DataSet set;
 		private int layerNum = 0;
 		
-		
-		void MainFormLoad(object sender, EventArgs e)
+		private WacomMTDNManager multiTouchManager = WacomMTDNManager.GetInstance();
+
+		int multiTouchManager_FingerEvent(WacomMTFingerList fingerPacket)
 		{
-			try {
-			if(!RegisterTouchWindow(this.Handle, 0))
+			if(set == null)
+			  return 0;
+			/*String fingers = "";
+			foreach(WacomMTFinger finger in fingerPacket.Fingers)
 			{
-				MessageBox.Show("Could not register touch input!");
-			}
-			}
-			catch(Exception)
-			{
-				// Who cares about exceptions, anyway?
-				MessageBox.Show("Error occurred while registering touch input!");
+				fingers += finger.X + "|" + finger.Y + "\r\n";
 			}
 			
-
+			MessageBox.Show(fingers);*/
+			if(fingerPacket.Fingers.Count.Equals(2))
+			{
+				layerNum = Convert.ToInt32((set.VoxelsZ - 1) * fingerPacket.Fingers[0].Y);
+				setImage(layerNum);
+			}
+			return 0;
 		}
-		
-		[PermissionSet(SecurityAction.Demand, Name = "FullTrust")]
-        protected override void WndProc(ref Message m)
-        {
-            // Decode and handle WM_TOUCH message.
-            bool handled = false;
-            switch (m.Msg)
-            {
-                case WM_TOUCH:
-                    //handled = DecodeTouch(ref m);
-                    MessageBox.Show("Received touch event");
-                    break;
-                default:
-                    handled = false;
-                    //MessageBox.Show("Recv. other event");
-                    break;
-            }
 
-            // Call parent WndProc for default message processing.
-            base.WndProc(ref m);
-
-            if (handled)
-            {
-                // Acknowledge event if handled.
-                m.Result = new System.IntPtr(1);
-            }
-        }
+		void MainFormLoad(object sender, EventArgs e)
+		{
+			WacomMTError err = multiTouchManager.WacomMTInitialize(NativeConstants.WACOM_MULTI_TOUCH_API_VERSION);
+			if(err == WacomMTError.WMTErrorSuccess)
+			{
+				multiTouchManager.FingerEvent += multiTouchManager_FingerEvent;
+			}
+		}
         
 		IntPtr layer;
 		void OpenToolStripMenuItemClick(object sender, EventArgs e)
@@ -134,10 +112,6 @@ namespace MedVis_Projekt
 						{
 							onKeyDown(evt);
 						}
-						if(evt.type == SDL.SDL_EventType.SDL_MULTIGESTURE)
-						{
-							MessageBox.Show("Multi-Gesture!");
-						}
 					}
 				}
 				
@@ -147,16 +121,16 @@ namespace MedVis_Projekt
 		void renderZImage(int z)
 		{				
 			//SDL.SDL_RenderClear(renderer);
-			SDL.SDL_Surface layer_surf = set.getLayers()[z];
+			/*SDL.SDL_Surface layer_surf = set.getLayers()[z];
 			unsafe {
 				layer = Marshal.AllocHGlobal(sizeof(SDL.SDL_Surface));
 			}
 
 			Marshal.StructureToPtr(layer_surf, layer, true);
 			SDL.SDL_BlitSurface(layer, IntPtr.Zero, SDL.SDL_GetWindowSurface(window), IntPtr.Zero);
-			SDL.SDL_UpdateWindowSurface(window);
+			SDL.SDL_UpdateWindowSurface(window);*/
 		
-			/*
+			
 			for(ulong x = 0; x < set.VoxelsX; x++)
 				for(ulong y = 0; y < set.VoxelsY; y++)
 			{
@@ -175,18 +149,22 @@ namespace MedVis_Projekt
 				
 				SDL.SDL_SetRenderDrawColor(renderer, greyscale_val, greyscale_val, greyscale_val, 255);
 				SDL.SDL_RenderDrawPoint(renderer, (int)x, (int)y);
-			}*/
-			//SDL.SDL_RenderPresent(renderer);
+			}
+			SDL.SDL_RenderPresent(renderer);
+		}
+		
+		void setImage(int layerNum)
+		{
+			renderZImage(layerNum);
+			SDL.SDL_SetWindowTitle(window, "Showing z-layer " + layerNum + " of " + (int)set.VoxelsZ);
 		}
 		
 		void onKeyDown(SDL.SDL_Event evt)
 		{
-			if(evt.key.keysym.sym == SDL.SDL_Keycode.SDLK_DOWN && layerNum < (int)set.VoxelsZ)
+			if(evt.key.keysym.sym == SDL.SDL_Keycode.SDLK_DOWN && layerNum < (int)set.VoxelsZ - 1)
 				layerNum++;
 			if(evt.key.keysym.sym == SDL.SDL_Keycode.SDLK_UP && layerNum > 0)
 				layerNum--;
-			renderZImage(layerNum);
-			SDL.SDL_SetWindowTitle(window, "Showing z-layer " + layerNum + " of " + (int)set.VoxelsZ);
 		}
 	}
 }
