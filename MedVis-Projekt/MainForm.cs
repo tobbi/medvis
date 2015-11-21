@@ -49,7 +49,7 @@ namespace MedVis_Projekt
 			if(set == null)
 			  return 0;
 
-			if(fingerPacket.Fingers.Count.Equals(2))
+			if(fingerPacket.Fingers.Count.Equals(1))
 			{
 				layerNum = Convert.ToInt32((set.VoxelsZ - 1) * fingerPacket.Fingers[0].Y);
 				glControl1.Invalidate();

@@ -82,13 +82,6 @@ namespace MedVis_Projekt
 		
 		double[,] transformations = new double[4,4];
 		
-		private Voxel[,,] voxels;
-		
-		public Voxel[,,] getVoxels()
-		{
-			return voxels;
-		}
-		
 		//SDL.SDL_Surface[] layers;
 		
 		DataLayer[] datalayers;
@@ -106,8 +99,6 @@ namespace MedVis_Projekt
 			voxelsX = ByteStreamParser.getUint32Value(stream, 0, 3);
 			voxelsY = ByteStreamParser.getUint32Value(stream, 4, 7);
 			voxelsZ = ByteStreamParser.getUint32Value(stream, 8, 11);
-			//voxels = new Voxel[voxelsX, voxelsY, voxelsZ];
-			//layers = new SDL.SDL_Surface[voxelsZ];
 			volumeNum = ByteStreamParser.getUint32Value(stream, 12, 15);
 			
 			realSizeX = ByteStreamParser.getDoubleValue(stream, 16, 23);
@@ -143,7 +134,6 @@ namespace MedVis_Projekt
 			datalayers[0].voxelData = new byte[(int)this.voxelsX * (int)this.voxelsY];
 			while(index < stream.Length - 1)
 			{
-				Voxel voxel = null;
 				if(dataFormat.EndsWith("8"))
 				{
 					byte val = ByteStreamParser.getSubArray(stream, index, index + 1)[0];
@@ -154,13 +144,11 @@ namespace MedVis_Projekt
 					{
 						return;
 					}
-					//voxel = new Voxel(val);
 				}
 				else if(dataFormat.EndsWith("16"))
 				{
-					//voxel = new Voxel(ByteStreamParser.getUShortValue(stream, index, index + 1));
+					//TODO: Implement!
 				}
-				//voxels[_x, _y, _z] = voxel;
 				_x++;
 				if(_x >= voxelsX)
 				{
