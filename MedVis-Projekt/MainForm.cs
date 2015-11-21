@@ -7,13 +7,16 @@
  * To change this template use Tools | Options | Coding | Edit Standard Headers.
  */
  
-using SDL2;
 using System;
+using System.Drawing;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
 using WacomMTDN;
+
+using OpenTK.Graphics;
+using OpenTK.Graphics.OpenGL;
 
 namespace MedVis_Projekt
 {
@@ -34,9 +37,10 @@ namespace MedVis_Projekt
 			//
 		}
 		
-		private IntPtr renderer, window;
 		private DataSet set;
 		private int layerNum = 0;
+		
+		private bool glControlLoaded = false;
 		
 		private WacomMTDNManager multiTouchManager = WacomMTDNManager.GetInstance();
 
@@ -44,17 +48,11 @@ namespace MedVis_Projekt
 		{
 			if(set == null)
 			  return 0;
-			/*String fingers = "";
-			foreach(WacomMTFinger finger in fingerPacket.Fingers)
-			{
-				fingers += finger.X + "|" + finger.Y + "\r\n";
-			}
-			
-			MessageBox.Show(fingers);*/
+
 			if(fingerPacket.Fingers.Count.Equals(2))
 			{
 				layerNum = Convert.ToInt32((set.VoxelsZ - 1) * fingerPacket.Fingers[0].Y);
-				setImage(layerNum);
+				glControl1.Invalidate();
 			}
 			return 0;
 		}
@@ -68,103 +66,77 @@ namespace MedVis_Projekt
 			}
 		}
         
-		IntPtr layer;
 		void OpenToolStripMenuItemClick(object sender, EventArgs e)
 		{
 			DialogResult res = openFileDialog1.ShowDialog();
 			if(res == DialogResult.OK)
 			{
-				SDL.SDL_Init(SDL.SDL_INIT_VIDEO);
-				window = SDL.SDL_CreateWindow("Test", SDL.SDL_WINDOWPOS_CENTERED, SDL.SDL_WINDOWPOS_CENTERED, 800, 600, 
-				                              SDL.SDL_WindowFlags.SDL_WINDOW_SHOWN | SDL.SDL_WindowFlags.SDL_WINDOW_RESIZABLE);
-				renderer = SDL.SDL_CreateRenderer(window, -1, SDL.SDL_RendererFlags.SDL_RENDERER_ACCELERATED | SDL.SDL_RendererFlags.SDL_RENDERER_PRESENTVSYNC);
-				
 				byte[] contents = File.ReadAllBytes(openFileDialog1.FileName);
-				set = new DataSet(contents, renderer);
-				MessageBox.Show(set.ToString());
-							
-
-				/*for(int x = 0; x < (int)set.VoxelsX; x++)
-					for(int y = 0; y < (int)set.VoxelsY; y++)
-						for(int z = 0; z < (int)set.VoxelsZ; z++)
-				{
-					Voxel v = set.getVoxels()[x, y, z];
-					if(v == null)
-						continue;
-					byte val = v.toGreyscaleValue();
-				}*/
-				
-				//for(int i = 0; i < set.voxels.Count; i++)
-				//{
-					//MessageBox.Show(((IVoxel)(set.voxels[i])).toHounsfieldT().ToString());
-				//}
-				
-				
-				renderZImage(15);
-				
-
-				while(true)
-				{
-					SDL.SDL_Event evt;
-					while(SDL.SDL_PollEvent(out evt) == 1)
-					{
-						if(evt.type == SDL.SDL_EventType.SDL_KEYDOWN)
-						{
-							onKeyDown(evt);
-						}
-					}
-				}
-				
+				set = new DataSet(contents);
+				layerNum = 1;
+				glControl1.Invalidate();
 			}
 		}
+		void GlControl1Load(object sender, EventArgs e)
+		{
+			glControlLoaded = true;
+			GL.ClearColor(Color.SkyBlue);
+			SetupViewport();
+		}
 		
-		void renderZImage(int z)
-		{				
-			//SDL.SDL_RenderClear(renderer);
-			/*SDL.SDL_Surface layer_surf = set.getLayers()[z];
-			unsafe {
-				layer = Marshal.AllocHGlobal(sizeof(SDL.SDL_Surface));
-			}
-
-			Marshal.StructureToPtr(layer_surf, layer, true);
-			SDL.SDL_BlitSurface(layer, IntPtr.Zero, SDL.SDL_GetWindowSurface(window), IntPtr.Zero);
-			SDL.SDL_UpdateWindowSurface(window);*/
+		private void SetupViewport()
+    	{
+      		int w = glControl1.Width;
+      		int h = glControl1.Height;
+      		GL.MatrixMode(MatrixMode.Projection);
+      		GL.LoadIdentity();
+      		GL.Ortho(0, w, 0, h, -1, 1); // Bottom-left corner pixel has coordinate (0, 0)
+      		GL.Viewport(0, 0, w, h); // Use all of the glControl painting area
+    	}
 		
+		void GlControl1Paint(object sender, PaintEventArgs e)
+		{
+			try {
+			if(!glControlLoaded)
+				return;
 			
-			for(ulong x = 0; x < set.VoxelsX; x++)
-				for(ulong y = 0; y < set.VoxelsY; y++)
-			{
-				Voxel current;
-				try {
-					current = set.getVoxels()[(int)x, (int)y, (int)z];
-				}
-				catch(IndexOutOfRangeException)
-				{
-					continue;
-				}
-				if(current == null)
-					continue;
-				
-				byte greyscale_val = current.toGreyscaleValue();
-				
-				SDL.SDL_SetRenderDrawColor(renderer, greyscale_val, greyscale_val, greyscale_val, 255);
-				SDL.SDL_RenderDrawPoint(renderer, (int)x, (int)y);
+			if(set == null)
+				return;
+			
+			GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+			GL.MatrixMode(MatrixMode.Modelview);
+		    GL.LoadIdentity();
+		    GL.Enable(EnableCap.Texture2D);
+		    GL.BindTexture(TextureTarget.Texture2D, set.getOpenGLTextures()[layerNum]);
+		    GL.Begin(BeginMode.Quads);
+		    GL.TexCoord2(0, 0); GL.Vertex2(10, 10);
+		    GL.TexCoord2(1, 0); GL.Vertex2(set.VoxelsX, 10);
+		    GL.TexCoord2(1, 1); GL.Vertex2(set.VoxelsX, set.VoxelsY);
+		    GL.TexCoord2(0, 1); GL.Vertex2(10, set.VoxelsY);
+		    GL.End();
+			
+			glControl1.SwapBuffers();
 			}
-			SDL.SDL_RenderPresent(renderer);
+			catch(Exception ex)
+			{
+				MessageBox.Show(ex.ToString() + Environment.NewLine + "Number of layers: " + set.getOpenGLTextures().Length);
+			}
 		}
-		
-		void setImage(int layerNum)
+		void GlControl1Resize(object sender, EventArgs e)
 		{
-			renderZImage(layerNum);
-			SDL.SDL_SetWindowTitle(window, "Showing z-layer " + layerNum + " of " + (int)set.VoxelsZ);
+			if(!glControlLoaded)
+				return;
+			SetupViewport();
+			glControl1.Invalidate();
 		}
-		
-		void onKeyDown(SDL.SDL_Event evt)
+		void MainFormKeyDown(object sender, KeyEventArgs e)
 		{
-			if(evt.key.keysym.sym == SDL.SDL_Keycode.SDLK_DOWN && layerNum < (int)set.VoxelsZ - 1)
+			if(e.KeyCode == Keys.Down)
 				layerNum++;
-			if(evt.key.keysym.sym == SDL.SDL_Keycode.SDLK_UP && layerNum > 0)
+			if(e.KeyCode == Keys.Up)
 				layerNum--;
+			MessageBox.Show(layerNum.ToString());
+			glControl1.Invalidate();
 		}
 	}
 }

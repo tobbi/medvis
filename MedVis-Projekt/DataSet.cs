@@ -12,7 +12,8 @@ using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
-using SDL2;
+using OpenTK.Graphics;
+using OpenTK.Graphics.OpenGL;
 
 namespace MedVis_Projekt
 {
@@ -44,6 +45,10 @@ namespace MedVis_Projekt
 			get {
 				return voxelsZ;
 			}
+		}
+		
+		public struct DataLayer {
+			public byte[] voxelData;
 		}
 		
 		private ulong volumeNum;
@@ -84,24 +89,25 @@ namespace MedVis_Projekt
 			return voxels;
 		}
 		
-		SDL.SDL_Surface[] layers;
+		//SDL.SDL_Surface[] layers;
 		
-		public SDL.SDL_Surface[] getLayers()
+		DataLayer[] datalayers;
+		int[] textures;
+		
+		public int[] getOpenGLTextures()
 		{
-			return layers;
+			return textures;
 		}
 		
-		IntPtr window;
-		
-		public DataSet(Byte[] stream, IntPtr window)
+		public DataSet(Byte[] stream)
 		{	
 			this.stream = stream;
-			this.window = window;
+
 			voxelsX = ByteStreamParser.getUint32Value(stream, 0, 3);
 			voxelsY = ByteStreamParser.getUint32Value(stream, 4, 7);
 			voxelsZ = ByteStreamParser.getUint32Value(stream, 8, 11);
-			voxels = new Voxel[voxelsX, voxelsY, voxelsZ];
-			layers = new SDL.SDL_Surface[voxelsZ];
+			//voxels = new Voxel[voxelsX, voxelsY, voxelsZ];
+			//layers = new SDL.SDL_Surface[voxelsZ];
 			volumeNum = ByteStreamParser.getUint32Value(stream, 12, 15);
 			
 			realSizeX = ByteStreamParser.getDoubleValue(stream, 16, 23);
@@ -131,58 +137,57 @@ namespace MedVis_Projekt
 			index = 312;
 			
 			ulong _x = 0, _y = 0, _z = 0;
-			
-			IntPtr surface = SDL.SDL_CreateRGBSurface(0, (int)this.voxelsX, (int)this.voxelsY, 32, 0, 0, 0, 0);
-			var pixels = new Int32[this.voxelsX * this.voxelsY];
-			var surface_struct = (SDL.SDL_Surface)Marshal.PtrToStructure(surface, typeof(SDL.SDL_Surface));
-			
-				while(index < stream.Length - 1)
+			datalayers = new DataLayer[(int)voxelsZ];
+			textures = new int[(int)voxelsZ];
+			GL.GenTextures((int)voxelsZ, textures);
+			datalayers[0].voxelData = new byte[(int)this.voxelsX * (int)this.voxelsY];
+			while(index < stream.Length - 1)
+			{
+				Voxel voxel = null;
+				if(dataFormat.EndsWith("8"))
 				{
-					Voxel voxel = null;
-					if(dataFormat.EndsWith("8"))
-					{
-						byte val = ByteStreamParser.getSubArray(stream, index, index + 1)[0];
-						try {
-						pixels[(int)_y * (int)this.voxelsY + (int)_x] = (int)SDL.SDL_MapRGBA(surface_struct.format, val, val, val, 255);
-						}
-						catch(IndexOutOfRangeException)
-						{
-							return;
-						}
-						//SDL.SDL_Point p;
-						//SDL.SDL_Rect r = new SDL.SDL_Rect();
-						//r.x = (int)_x;
-						//r.y = (int)_y;
-						//r.w = r.h = 1;
-						
-						//uint c = SDL.SDL_MapRGBA(format, val, val, val, 255);
-						//SDL.SDL_FillRect(surf, ref r, c);
-						
-						//pixels[_y * this.voxelsY + _x] = c;
-						voxel = new Voxel(val);
+					byte val = ByteStreamParser.getSubArray(stream, index, index + 1)[0];
+					try {
+						datalayers[_z].voxelData[(int)_y * (int)this.voxelsY + (int)_x] = val;
 					}
-					else if(dataFormat.EndsWith("16"))
+					catch(IndexOutOfRangeException)
 					{
-						voxel = new Voxel(ByteStreamParser.getUShortValue(stream, index, index + 1));
+						return;
 					}
-					voxels[_x, _y, _z] = voxel;
-					_x++;
-					if(_x >= voxelsX)
-					{
-						_x = 0;
-						_y++;
-					}
-					if(_y >= voxelsY)
-					{
-						//layers[_z] = surf;
-						Marshal.Copy(pixels, 0, surface_struct.pixels, (int)this.voxelsX * (int)this.voxelsY);
-						layers[_z] = surface_struct;
-						_y = 0;
-						_z++;
-					}
-					index++;
+					//voxel = new Voxel(val);
 				}
-			//}
+				else if(dataFormat.EndsWith("16"))
+				{
+					//voxel = new Voxel(ByteStreamParser.getUShortValue(stream, index, index + 1));
+				}
+				//voxels[_x, _y, _z] = voxel;
+				_x++;
+				if(_x >= voxelsX)
+				{
+					_x = 0;
+					_y++;
+				}
+				if(_y >= voxelsY)
+				{
+					GL.BindTexture(TextureTarget.Texture2D, textures[(int)_z]);
+					GL.TexImage2D(TextureTarget.Texture2D, 0, 
+					              PixelInternalFormat.Rgb,
+					              (int)this.voxelsX, (int)this.voxelsY, 0, 
+					              PixelFormat.Luminance, 
+					              PixelType.UnsignedByte, datalayers[_z].voxelData);
+					GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+					GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.NearestMipmapNearest);
+					GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMinFilter.Linear);
+					
+					_y = 0;
+					_z++;
+					if(_z < voxelsZ)
+					{
+						datalayers[_z].voxelData = new byte[(int)this.voxelsX * (int)this.voxelsY];
+					}
+				}
+				index++;
+			}
 		}
 		
 		private ulong numberOfDataBytes()
