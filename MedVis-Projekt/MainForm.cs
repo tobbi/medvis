@@ -62,6 +62,7 @@ namespace MedVis_Projekt
 			{
 				layer1 = Convert.ToInt32((set.VoxelsZ - 1) * fingerPacket.Fingers[0].Y);
 				layer2 = Convert.ToInt32((set.VoxelsZ - 1) * fingerPacket.Fingers[1].Y);
+				
 				useMIP = true;
 				glControl1.Invalidate();
 			}
@@ -152,7 +153,7 @@ namespace MedVis_Projekt
 		private void drawLayer(int layerNum)
 		{
 			GL.BindTexture(TextureTarget.Texture2D, set.getOpenGLTextures()[layerNum]);
-		    GL.Begin(BeginMode.Quads);
+		    GL.Begin(PrimitiveType.Quads);
 		    //GL.Translate((Width / 2) - (int)set.VoxelsX / 2, (Height / 2) - (int)set.VoxelsY / 2, 0);
 		    GL.TexCoord2(0, 0); GL.Vertex2(0, 0);
 		    GL.TexCoord2(1, 0); GL.Vertex2(set.VoxelsX, 0);
