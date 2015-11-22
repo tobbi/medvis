@@ -43,6 +43,9 @@ namespace MedVis_Projekt
 		private bool glControlLoaded = false;
 		
 		private WacomMTDNManager multiTouchManager = WacomMTDNManager.GetInstance();
+		
+		private bool useMIP;
+		private int layer1, layer2;
 
 		int multiTouchManager_FingerEvent(WacomMTFingerList fingerPacket)
 		{
@@ -52,6 +55,14 @@ namespace MedVis_Projekt
 			if(fingerPacket.Fingers.Count.Equals(1))
 			{
 				layerNum = Convert.ToInt32((set.VoxelsZ - 1) * fingerPacket.Fingers[0].Y);
+				useMIP = false;
+				glControl1.Invalidate();
+			}
+			if(fingerPacket.Fingers.Count.Equals(2))
+			{
+				layer1 = Convert.ToInt32((set.VoxelsZ - 1) * fingerPacket.Fingers[0].Y);
+				layer2 = Convert.ToInt32((set.VoxelsZ - 1) * fingerPacket.Fingers[1].Y);
+				useMIP = true;
 				glControl1.Invalidate();
 			}
 			return 0;
@@ -78,7 +89,7 @@ namespace MedVis_Projekt
 		void GlControl1Load(object sender, EventArgs e)
 		{
 			glControlLoaded = true;
-			GL.ClearColor(Color.SkyBlue);
+			GL.ClearColor(Color.Black);
 			SetupViewport();
 		}
 		
@@ -98,21 +109,38 @@ namespace MedVis_Projekt
 			if(!glControlLoaded)
 				return;
 			
+		
 			if(set == null)
+			{
+				GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+				glControl1.SwapBuffers();
 				return;
+			}
 			
 			GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 			GL.MatrixMode(MatrixMode.Modelview);
 		    GL.LoadIdentity();
 		    GL.Enable(EnableCap.Texture2D);
-		    GL.BindTexture(TextureTarget.Texture2D, set.getOpenGLTextures()[layerNum]);
-		    GL.Begin(BeginMode.Quads);
-		    GL.TexCoord2(0, 0); GL.Vertex2(10, 10);
-		    GL.TexCoord2(1, 0); GL.Vertex2(set.VoxelsX, 10);
-		    GL.TexCoord2(1, 1); GL.Vertex2(set.VoxelsX, set.VoxelsY);
-		    GL.TexCoord2(0, 1); GL.Vertex2(10, set.VoxelsY);
-		    GL.End();
-			
+		    if(!useMIP)
+		    {
+		    	drawLayer(layerNum);
+		    }
+		    else
+		    {
+		    	GL.Enable(EnableCap.Blend);
+		    	GL.BlendEquation(BlendEquationMode.Max);
+		    	int start, end;
+		    	if(layer1 < layer2)
+		    	{
+		    		start = layer1; end = layer2;
+		    	}
+		    	else
+		    	{
+		    		start = layer2; end = layer1;
+		    	}
+		    	for(int i = start; i < end; i++)
+		    		drawLayer(i);
+		    }
 			glControl1.SwapBuffers();
 			}
 			catch(Exception ex)
@@ -120,6 +148,20 @@ namespace MedVis_Projekt
 				MessageBox.Show(ex.ToString() + Environment.NewLine + "Number of layers: " + set.getOpenGLTextures().Length);
 			}
 		}
+		
+		private void drawLayer(int layerNum)
+		{
+			GL.BindTexture(TextureTarget.Texture2D, set.getOpenGLTextures()[layerNum]);
+		    GL.Begin(BeginMode.Quads);
+		    //GL.Translate((Width / 2) - (int)set.VoxelsX / 2, (Height / 2) - (int)set.VoxelsY / 2, 0);
+		    GL.TexCoord2(0, 0); GL.Vertex2(0, 0);
+		    GL.TexCoord2(1, 0); GL.Vertex2(set.VoxelsX, 0);
+		    GL.TexCoord2(1, 1); GL.Vertex2(set.VoxelsX, set.VoxelsY);
+		    GL.TexCoord2(0, 1); GL.Vertex2(0, set.VoxelsY);
+		    GL.End();
+			
+		}
+		
 		void GlControl1Resize(object sender, EventArgs e)
 		{
 			if(!glControlLoaded)
@@ -134,6 +176,11 @@ namespace MedVis_Projekt
 			if(e.KeyCode == Keys.Up)
 				layerNum--;
 			MessageBox.Show(layerNum.ToString());
+			glControl1.Invalidate();
+		}
+		void MainFormResizeEnd(object sender, EventArgs e)
+		{
+			SetupViewport();
 			glControl1.Invalidate();
 		}
 	}

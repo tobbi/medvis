@@ -57,7 +57,7 @@ namespace MedVis_Projekt
 			this.menuStrip1.Location = new System.Drawing.Point(0, 0);
 			this.menuStrip1.Name = "menuStrip1";
 			this.menuStrip1.Padding = new System.Windows.Forms.Padding(8, 2, 0, 2);
-			this.menuStrip1.Size = new System.Drawing.Size(885, 28);
+			this.menuStrip1.Size = new System.Drawing.Size(1153, 28);
 			this.menuStrip1.TabIndex = 0;
 			this.menuStrip1.Text = "menuStrip1";
 			// 
@@ -82,11 +82,14 @@ namespace MedVis_Projekt
 			// 
 			// glControl1
 			// 
+			this.glControl1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+			| System.Windows.Forms.AnchorStyles.Left) 
+			| System.Windows.Forms.AnchorStyles.Right)));
 			this.glControl1.BackColor = System.Drawing.Color.Black;
 			this.glControl1.Location = new System.Drawing.Point(0, 32);
 			this.glControl1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
 			this.glControl1.Name = "glControl1";
-			this.glControl1.Size = new System.Drawing.Size(885, 506);
+			this.glControl1.Size = new System.Drawing.Size(1153, 621);
 			this.glControl1.TabIndex = 1;
 			this.glControl1.VSync = false;
 			this.glControl1.Load += new System.EventHandler(this.GlControl1Load);
@@ -97,7 +100,7 @@ namespace MedVis_Projekt
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(885, 537);
+			this.ClientSize = new System.Drawing.Size(1153, 654);
 			this.Controls.Add(this.glControl1);
 			this.Controls.Add(this.menuStrip1);
 			this.KeyPreview = true;
@@ -106,6 +109,7 @@ namespace MedVis_Projekt
 			this.Name = "MainForm";
 			this.Text = "MedVis-Projekt";
 			this.Load += new System.EventHandler(this.MainFormLoad);
+			this.ResizeEnd += new System.EventHandler(this.MainFormResizeEnd);
 			this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.MainFormKeyDown);
 			this.menuStrip1.ResumeLayout(false);
 			this.menuStrip1.PerformLayout();
