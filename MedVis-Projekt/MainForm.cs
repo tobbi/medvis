@@ -138,7 +138,7 @@ namespace MedVis_Projekt
 		    	{
 		    		start = layer2; end = layer1;
 		    	}
-		    	for(int i = start; i < end; i++)
+		    	for(int i = start; i <= end; i++)
 		    		drawLayer(i);
 		    }
 			glControl1.SwapBuffers();

@@ -80,8 +80,6 @@ namespace MedVis_Projekt
 			}
 		}
 		
-		Byte[] stream;
-		
 		double[,] transformations = new double[4,4];
 		
 		//SDL.SDL_Surface[] layers;
