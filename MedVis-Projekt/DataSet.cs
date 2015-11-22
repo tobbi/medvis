@@ -7,6 +7,8 @@
  * To change this template use Tools | Options | Coding | Edit Standard Headers.
  */
 using System;
+using System.IO;
+using System.Text;
 using System.Collections;
 using System.Drawing;
 using System.Runtime.InteropServices;
@@ -92,53 +94,74 @@ namespace MedVis_Projekt
 			return textures;
 		}
 		
-		public DataSet(Byte[] stream)
-		{	
-			this.stream = stream;
-
-			voxelsX = ByteStreamParser.getUint32Value(stream, 0, 3);
-			voxelsY = ByteStreamParser.getUint32Value(stream, 4, 7);
-			voxelsZ = ByteStreamParser.getUint32Value(stream, 8, 11);
-			volumeNum = ByteStreamParser.getUint32Value(stream, 12, 15);
+		public DataSet(String path)
+		{
+			FileStream stream = File.OpenRead(path);
+			byte[] buffer = new byte[4];
 			
-			realSizeX = ByteStreamParser.getDoubleValue(stream, 16, 23);
-			realSizeY = ByteStreamParser.getDoubleValue(stream, 24, 31);
-			realSizeZ = ByteStreamParser.getDoubleValue(stream, 32, 39);
+			// voxelsX:
+			stream.Read(buffer, 0, 4);
+			voxelsX = BitConverter.ToUInt32(buffer, 0);
 			
-			sequenceDuration = ByteStreamParser.getDoubleValue(stream, 40, 47);
+			// voxelsX:
+			stream.Read(buffer, 0, 4);
+			voxelsY = BitConverter.ToUInt32(buffer, 0);
 			
-			numBytesPerVoxel = ByteStreamParser.getUShortValue(stream, 48, 49);
+			// voxelsZ:
+			stream.Read(buffer, 0, 4);
+			voxelsZ = BitConverter.ToUInt32(buffer, 0);
 			
-			dataFormat = ByteStreamParser.getStringValue(stream, 50, 177);
+			// volumeNum:
+			stream.Read(buffer, 0, 4);
+			volumeNum = BitConverter.ToUInt32(buffer, 0);
 			
 			
-			int index = 178;
-			Console.WriteLine("Transformations:");
+			// Buffer vergrößern:
+			buffer = new byte[8];
+			
+			// realSizeX:
+			stream.Read(buffer, 0, 8);
+			realSizeX = BitConverter.ToDouble(buffer, 0);
+			
+			stream.Read(buffer, 0, 8);
+			realSizeY = BitConverter.ToDouble(buffer, 0);
+			
+			stream.Read(buffer, 0, 8);
+			realSizeZ = BitConverter.ToDouble(buffer, 0);
+			
+			stream.Read(buffer, 0, 8);
+			sequenceDuration = BitConverter.ToDouble(buffer, 0);
+			
+			buffer = new byte[2];
+			stream.Read(buffer, 0, 1);
+			numBytesPerVoxel = BitConverter.ToUInt16(buffer, 0);
+			
+			buffer = new byte[128];
+			stream.Read(buffer, 0, 128);
+			dataFormat = Encoding.ASCII.GetString(buffer).Replace((char)0, '\t').Trim();
+			
+			buffer = new byte[8];
 			for(int x = 0; x < 4; x++)
-			{
 				for(int y = 0; y < 4; y++)
-				{
-					transformations[x,y] = ByteStreamParser.getDoubleValue(stream, index, index + 8);
-					index += 8;
-					//Console.Write(transformations[x, y]);
-				}
-				//Console.WriteLine();
+			{
+				stream.Read(buffer, 0, 8);
+				transformations[x, y] = BitConverter.ToDouble(buffer, 0);
 			}
-			
-			index = 312;
+			stream.Seek(312, SeekOrigin.Begin);
 			
 			ulong _x = 0, _y = 0, _z = 0;
 			datalayers = new DataLayer[(int)voxelsZ];
 			textures = new int[(int)voxelsZ];
 			GL.GenTextures((int)voxelsZ, textures);
 			datalayers[0].voxelData = new byte[(int)this.voxelsX * (int)this.voxelsY];
-			while(index < stream.Length - 1)
+			
+			buffer = new byte[1];
+			while(stream.Read(buffer, 0, 1) > 0)
 			{
 				if(dataFormat.EndsWith("8"))
 				{
-					byte val = ByteStreamParser.getSubArray(stream, index, index + 1)[0];
 					try {
-						datalayers[_z].voxelData[(int)_y * (int)this.voxelsY + (int)_x] = val;
+						datalayers[_z].voxelData[(int)_y * (int)this.voxelsY + (int)_x] = buffer[0];
 					}
 					catch(IndexOutOfRangeException)
 					{
@@ -174,8 +197,8 @@ namespace MedVis_Projekt
 						datalayers[_z].voxelData = new byte[(int)this.voxelsX * (int)this.voxelsY];
 					}
 				}
-				index++;
 			}
+			stream.Close();
 		}
 		
 		private ulong numberOfDataBytes()
@@ -200,10 +223,11 @@ namespace MedVis_Projekt
 				+ transformations + "\r\n"
 				+ "=== Data format ===\r\n"
 				+ dataFormat + "\r\n"
-				+ "=== total length ===\r\n"
-				+ stream.Length + "\r\n"
-				+ "=== No. DataBytes===\r\n"
-				+ numberOfDataBytes() + "\r\n";
+				//+ "=== total length ===\r\n"
+				//+ stream.Length + "\r\n"
+				//+ "=== No. DataBytes===\r\n"
+				//+ numberOfDataBytes() + "\r\n"
+				;
 		}
 	}
 }

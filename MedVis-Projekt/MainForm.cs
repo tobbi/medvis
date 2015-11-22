@@ -71,9 +71,7 @@ namespace MedVis_Projekt
 			DialogResult res = openFileDialog1.ShowDialog();
 			if(res == DialogResult.OK)
 			{
-				byte[] contents = File.ReadAllBytes(openFileDialog1.FileName);
-				set = new DataSet(contents);
-				layerNum = 1;
+				set = new DataSet(openFileDialog1.FileName);
 				glControl1.Invalidate();
 			}
 		}
