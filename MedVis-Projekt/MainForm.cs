@@ -176,7 +176,6 @@ namespace MedVis_Projekt
 				layerNum++;
 			if(e.KeyCode == Keys.Up)
 				layerNum--;
-			MessageBox.Show(layerNum.ToString());
 			glControl1.Invalidate();
 		}
 		void MainFormResizeEnd(object sender, EventArgs e)
