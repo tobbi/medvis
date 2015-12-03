@@ -45,6 +45,7 @@ namespace MedVis_Projekt
 		private WacomMTDNManager multiTouchManager = WacomMTDNManager.GetInstance();
 		
 		private bool useMIP;
+		private bool useAverage;
 		private int layer1, layer2;
 
 		int multiTouchManager_FingerEvent(WacomMTFingerList fingerPacket)
@@ -56,6 +57,7 @@ namespace MedVis_Projekt
 			{
 				layerNum = Convert.ToInt32((set.VoxelsZ - 1) * fingerPacket.Fingers[0].Y);
 				useMIP = false;
+				useAverage = false;
 				glControl1.Invalidate();
 			}
 			if(fingerPacket.Fingers.Count.Equals(2))
@@ -66,6 +68,15 @@ namespace MedVis_Projekt
 				useMIP = true;
 				glControl1.Invalidate();
 			}
+			if(fingerPacket.Fingers.Count.Equals(3))
+			{
+				layer1 = Convert.ToInt32((set.VoxelsZ - 1) * fingerPacket.Fingers[0].Y);
+				layer2 = Convert.ToInt32((set.VoxelsZ - 1) * fingerPacket.Fingers[1].Y);
+
+				useAverage = true;
+				glControl1.Invalidate();
+			}
+			
 			return 0;
 		}
 
@@ -122,14 +133,29 @@ namespace MedVis_Projekt
 			GL.MatrixMode(MatrixMode.Modelview);
 		    GL.LoadIdentity();
 		    GL.Enable(EnableCap.Texture2D);
-		    if(!useMIP)
+		    if(!useMIP && !useAverage)
 		    {
 		    	drawLayer(layerNum);
 		    }
 		    else
 		    {
 		    	GL.Enable(EnableCap.Blend);
-		    	GL.BlendEquation(BlendEquationMode.Max);
+		    	if(useMIP)
+		    	{
+		    		GL.BlendEquation(BlendEquationMode.Max);
+		    	}
+		    	if(useAverage)
+		    	{
+		    		GL.BlendEquation(BlendEquationMode.FuncAdd);
+		    		float factor = 1.0f / Math.Abs(layer2 - layer1);
+		    		GL.BlendColor(factor, factor, factor, factor);
+		    		GL.BlendFunc(BlendingFactorSrc.ConstantColor, BlendingFactorDest.One);
+		    	}
+		    	else
+		    	{
+		    		GL.BlendFunc(BlendingFactorSrc.One, BlendingFactorDest.One);
+		    	}
+		    	
 		    	int start, end;
 		    	if(layer1 < layer2)
 		    	{
