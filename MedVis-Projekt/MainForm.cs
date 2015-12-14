@@ -43,10 +43,15 @@ namespace MedVis_Projekt
 		private bool glControlLoaded = false;
 		
 		private WacomMTDNManager multiTouchManager = WacomMTDNManager.GetInstance();
-		
-		private bool useMIP;
-		private bool useAverage;
+		private enum DisplayMode {
+			NONE, MODE_AVERAGE, MODE_MIP
+		}
+		private DisplayMode dispMode;
 		private int layer1, layer2;
+		
+		private int uniformLocationImage;
+		private int fensterLowLocation, fensterHighLocation;
+		
 
 		int multiTouchManager_FingerEvent(WacomMTFingerList fingerPacket)
 		{
@@ -56,24 +61,36 @@ namespace MedVis_Projekt
 			if(fingerPacket.Fingers.Count.Equals(1))
 			{
 				layerNum = Convert.ToInt32((set.VoxelsZ - 1) * fingerPacket.Fingers[0].Y);
-				useMIP = false;
-				useAverage = false;
+				dispMode = DisplayMode.NONE;
 				glControl1.Invalidate();
 			}
 			if(fingerPacket.Fingers.Count.Equals(2))
 			{
-				layer1 = Convert.ToInt32((set.VoxelsZ - 1) * fingerPacket.Fingers[0].Y);
-				layer2 = Convert.ToInt32((set.VoxelsZ - 1) * fingerPacket.Fingers[1].Y);
-				
-				useMIP = true;
+				if(fingerPacket.Fingers[0].X < 0.5 && fingerPacket.Fingers[1].X < 0.5)
+				{
+					layer1 = Convert.ToInt32((set.VoxelsZ - 1) * fingerPacket.Fingers[0].Y);
+					layer2 = Convert.ToInt32((set.VoxelsZ - 1) * fingerPacket.Fingers[1].Y);
+
+					dispMode = DisplayMode.MODE_MIP;
+				}
+				if(fingerPacket.Fingers[0].X > 0.5 && fingerPacket.Fingers[1].X > 0.5)
+				{
+					// Right side of tablet
+				}
 				glControl1.Invalidate();
 			}
 			if(fingerPacket.Fingers.Count.Equals(3))
 			{
-				layer1 = Convert.ToInt32((set.VoxelsZ - 1) * fingerPacket.Fingers[0].Y);
-				layer2 = Convert.ToInt32((set.VoxelsZ - 1) * fingerPacket.Fingers[1].Y);
+				fingerPacket.Fingers.Sort(delegate(WacomMTDN.WacomMTFinger finger1, WacomMTDN.WacomMTFinger finger2)
+				{
+				                          	if(finger1.Y < finger2.Y) return -1;
+				                          	if(finger1.Y == finger2.Y) return 0;
+				                      		return 1;
+				});
+				layer1 = Convert.ToInt32((set.VoxelsZ - 1) * fingerPacket.Fingers[1].Y);
+				layer2 = Convert.ToInt32((set.VoxelsZ - 1) * fingerPacket.Fingers[2].Y);
 
-				useAverage = true;
+				dispMode = DisplayMode.MODE_AVERAGE;
 				glControl1.Invalidate();
 			}
 			
@@ -98,11 +115,43 @@ namespace MedVis_Projekt
 				glControl1.Invalidate();
 			}
 		}
+		
+		private int programId;
 		void GlControl1Load(object sender, EventArgs e)
 		{
 			glControlLoaded = true;
 			GL.ClearColor(Color.Black);
 			SetupViewport();
+			
+			programId = GL.CreateProgram();
+			int shader_address;
+			loadShader("test.glsl", ShaderType.FragmentShader, programId, out shader_address);
+			GL.LinkProgram(programId);
+			GL.UseProgram(programId);
+			
+			fensterHighLocation = GL.GetUniformLocation(programId, "fensterHigh");
+			fensterLowLocation = GL.GetUniformLocation(programId, "fensterLow");
+			uniformLocationImage = GL.GetUniformLocation(programId, "image");
+			
+			setFenster(10.0f, 120.0f);
+		}
+		
+		void setFenster(float low, float high)
+		{
+			GL.Uniform1(fensterLowLocation, low);
+			GL.Uniform1(fensterHighLocation, high);
+		}
+		
+		void loadShader(String filename,ShaderType type, int program, out int address)
+		{
+			address = GL.CreateShader(type);
+            using (StreamReader sr = new StreamReader(filename))
+            {
+                GL.ShaderSource(address, sr.ReadToEnd());
+            }
+            GL.CompileShader(address);
+            GL.AttachShader(program, address);
+            MessageBox.Show(GL.GetShaderInfoLog(address));
 		}
 		
 		private void SetupViewport()
@@ -133,27 +182,26 @@ namespace MedVis_Projekt
 			GL.MatrixMode(MatrixMode.Modelview);
 		    GL.LoadIdentity();
 		    GL.Enable(EnableCap.Texture2D);
-		    if(!useMIP && !useAverage)
+		    if(dispMode.Equals(DisplayMode.NONE))
 		    {
+		    	GL.BlendColor(1,1,1,1);
 		    	drawLayer(layerNum);
 		    }
 		    else
 		    {
 		    	GL.Enable(EnableCap.Blend);
-		    	if(useMIP)
+		    	if(dispMode.Equals(DisplayMode.MODE_MIP))
 		    	{
 		    		GL.BlendEquation(BlendEquationMode.Max);
+		    		GL.BlendColor(1,1,1,1);
+		    		GL.BlendFunc(BlendingFactorSrc.One, BlendingFactorDest.One);
 		    	}
-		    	if(useAverage)
+		    	if(dispMode.Equals(DisplayMode.MODE_AVERAGE))
 		    	{
 		    		GL.BlendEquation(BlendEquationMode.FuncAdd);
 		    		float factor = 1.0f / Math.Abs(layer2 - layer1);
 		    		GL.BlendColor(factor, factor, factor, factor);
 		    		GL.BlendFunc(BlendingFactorSrc.ConstantColor, BlendingFactorDest.One);
-		    	}
-		    	else
-		    	{
-		    		GL.BlendFunc(BlendingFactorSrc.One, BlendingFactorDest.One);
 		    	}
 		    	
 		    	int start, end;
@@ -176,9 +224,10 @@ namespace MedVis_Projekt
 			}
 		}
 		
-		private void drawLayer(int layerNum)
+		private void drawLayer(int p_iLayerNum)
 		{
-			GL.BindTexture(TextureTarget.Texture2D, set.getOpenGLTextures()[layerNum]);
+			GL.BindTexture(TextureTarget.Texture2D, set.getOpenGLTextures()[p_iLayerNum]);
+			GL.Uniform1(uniformLocationImage, set.getOpenGLTextures()[p_iLayerNum]);
 		    GL.Begin(PrimitiveType.Quads);
 		    //GL.Translate((Width / 2) - (int)set.VoxelsX / 2, (Height / 2) - (int)set.VoxelsY / 2, 0);
 		    GL.TexCoord2(0, 0); GL.Vertex2(0, 0);

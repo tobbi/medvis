@@ -150,8 +150,11 @@ namespace MedVis_Projekt
 			ulong _x = 0, _y = 0, _z = 0;
 			datalayers = new DataLayer[(int)voxelsZ];
 			textures = new int[(int)voxelsZ];
-			GL.GenTextures((int)voxelsZ, textures);
 			datalayers[0].voxelData = new byte[(int)this.voxelsX * (int)this.voxelsY];
+			GL.GenTextures((int)voxelsZ, textures);
+			//var data = new byte[stream.Length - stream.Position];
+			//stream.Read(data, 0, Convert.ToInt32(stream.Length - stream.Position));
+			
 			
 			buffer = new byte[1];
 			while(stream.Read(buffer, 0, 1) > 0)
@@ -180,7 +183,7 @@ namespace MedVis_Projekt
 				{
 					GL.BindTexture(TextureTarget.Texture2D, textures[(int)_z]);
 					GL.TexImage2D(TextureTarget.Texture2D, 0, 
-					              PixelInternalFormat.Rgb,
+					              PixelInternalFormat.Rgb32f,
 					              (int)this.voxelsX, (int)this.voxelsY, 0, 
 					              PixelFormat.Luminance, 
 					              PixelType.UnsignedByte, datalayers[_z].voxelData);
@@ -197,6 +200,14 @@ namespace MedVis_Projekt
 				}
 			}
 			stream.Close();
+			/*GL.BindTexture(TextureTarget.Texture2DArray, textures[0]);
+			GL.TexStorage3D(TextureTarget3d.Texture2DArray, 1, SizedInternalFormat.Rgba8, (int)this.voxelsX, (int)this.voxelsY, (int)this.voxelsZ);
+			GL.TexSubImage3D(TextureTarget.Texture2DArray, 0, 0, 0, 0, (int)this.voxelsX, (int)this.voxelsY, (int)volumeNum, PixelFormat.Luminance, PixelType.UnsignedByte, data);
+			GL.TexParameter(TextureTarget.Texture2DArray, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+			GL.TexParameter(TextureTarget.Texture2DArray, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+			GL.TexParameter(TextureTarget.Texture2DArray, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+			GL.TexParameter(TextureTarget.Texture2DArray, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+			GL.Flush();*/
 		}
 		
 		private ulong numberOfDataBytes()
