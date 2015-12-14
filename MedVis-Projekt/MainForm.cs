@@ -75,7 +75,9 @@ namespace MedVis_Projekt
 				}
 				if(fingerPacket.Fingers[0].X > 0.5 && fingerPacket.Fingers[1].X > 0.5)
 				{
-					// Right side of tablet
+					float lower = fingerPacket.Fingers[0].X * 512;
+					float upper = fingerPacket.Fingers[1].X * 512;
+					setWindow(lower, upper);
 				}
 				glControl1.Invalidate();
 			}
@@ -133,19 +135,40 @@ namespace MedVis_Projekt
 			fensterLowLocation = GL.GetUniformLocation(programId, "fensterLow");
 			uniformLocationImage = GL.GetUniformLocation(programId, "image");
 			
-			setFenster(40.0f, 120.0f);
+			//setWindow(50.0f, 200.0f);
+			setWindowHounsfield(-600, 1600);
 		}
 		
-		void setFenster(float low, float high)
+		void setWindow(float low, float high)
 		{
+			if(low > high)
+			{
+				// Swap values:
+				float low2 = low;
+				low = high;
+				high = low2;
+			}
 			GL.Uniform1(fensterLowLocation, low);
 			GL.Uniform1(fensterHighLocation, high);
+			GL.UseProgram(programId);
+		}
+		
+		void setWindowHounsfield(int center, int width)
+		{
+			int HounsfieldValLow = center - width;
+			int HounsfieldValHigh = center + width;
+			if(HounsfieldValLow < -1024)
+				HounsfieldValLow = -1024;
+			if(HounsfieldValHigh > 3071)
+				HounsfieldValHigh = 3071;
+			
+			setWindow((HounsfieldValLow + 1024)/ 16, (HounsfieldValHigh + 1024)/16);
 		}
 		
 		void loadShader(String filename,ShaderType type, int program, out int address)
 		{
 			address = GL.CreateShader(type);
-            using (StreamReader sr = new StreamReader(filename))
+            using (var sr = new StreamReader(filename))
             {
                 GL.ShaderSource(address, sr.ReadToEnd());
             }
