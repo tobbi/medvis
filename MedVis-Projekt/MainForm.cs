@@ -133,7 +133,7 @@ namespace MedVis_Projekt
 			fensterLowLocation = GL.GetUniformLocation(programId, "fensterLow");
 			uniformLocationImage = GL.GetUniformLocation(programId, "image");
 			
-			setFenster(10.0f, 120.0f);
+			setFenster(40.0f, 120.0f);
 		}
 		
 		void setFenster(float low, float high)
@@ -227,7 +227,7 @@ namespace MedVis_Projekt
 		private void drawLayer(int p_iLayerNum)
 		{
 			GL.BindTexture(TextureTarget.Texture2D, set.getOpenGLTextures()[p_iLayerNum]);
-			GL.Uniform1(uniformLocationImage, set.getOpenGLTextures()[p_iLayerNum]);
+			//GL.Uniform1(uniformLocationImage, set.getOpenGLTextures()[p_iLayerNum]);
 		    GL.Begin(PrimitiveType.Quads);
 		    //GL.Translate((Width / 2) - (int)set.VoxelsX / 2, (Height / 2) - (int)set.VoxelsY / 2, 0);
 		    GL.TexCoord2(0, 0); GL.Vertex2(0, 0);
