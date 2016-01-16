@@ -77,6 +77,7 @@ namespace MedVis_Projekt
 				{
 					float lower = fingerPacket.Fingers[0].X * 512;
 					float upper = fingerPacket.Fingers[1].X * 512;
+					//MessageBox.Show(lower.ToString() + " " + upper.ToString());
 					setWindow(lower, upper);
 				}
 				glControl1.Invalidate();
@@ -136,7 +137,7 @@ namespace MedVis_Projekt
 			uniformLocationImage = GL.GetUniformLocation(programId, "image");
 			
 			//setWindow(50.0f, 200.0f);
-			setWindowHounsfield(-600, 1600);
+			setWindowHounsfield(20, 200);
 		}
 		
 		void setWindow(float low, float high)
@@ -174,7 +175,7 @@ namespace MedVis_Projekt
             }
             GL.CompileShader(address);
             GL.AttachShader(program, address);
-            MessageBox.Show(GL.GetShaderInfoLog(address));
+            //MessageBox.Show(GL.GetShaderInfoLog(address));
 		}
 		
 		private void SetupViewport()

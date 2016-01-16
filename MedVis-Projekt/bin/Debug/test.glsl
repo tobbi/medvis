@@ -4,7 +4,7 @@ uniform float fensterHigh;
 
 void main (void)  
 {
-   vec4 color = texture2D(image, gl_TexCoord[0].st); 
+   vec4 color = texture2D(image, gl_TexCoord[0].xy); 
    //fensterLow = fensterLow/255.0;
    //fensterHigh = fensterHigh/255.0;
 
@@ -22,8 +22,8 @@ void main (void)
    }
    else
    {
-	 float n = color.r * 255.0;
-	 float remappedVal = (fensterLow/255.0) + n * ((fensterHigh/255.0) - (fensterLow/255.0));
+	 float n = color.r;
+	 float remappedVal = (n-(fensterLow/255.0)) / ((fensterHigh/255.0) - (fensterLow/255.0));
 	 color.r = remappedVal;
 	 color.g = remappedVal;
 	 color.b = remappedVal;
